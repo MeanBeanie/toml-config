@@ -10,7 +10,7 @@ designed to reload the config every run, so code would prefferably run:
 #include <config.h>
 
 int main(void){
-    Config config = config_load("./path/to/config.toml");
+    config_load("./path/to/config.toml");
     // rest of code ...
 }
 ```
@@ -43,11 +43,11 @@ name = "Box"
 #include "config.h"
 
 int main(void){
-    Config config = config_load("config.toml");
+    config_load("config.toml");
 
-    printf("Screen Title: %s\n", config_section_get(config, "screen", "title"));
-    printf("Screen Height: %d\n", config_section_get(config, "screen", "height").as.integer);
-    Value value = config_section_get(config, "box", "gravity");
+    printf("Screen Title: %s\n", config_section_get("screen", "title"));
+    printf("Screen Height: %d\n", config_section_get("screen", "height").as.integer);
+    Value value = config_section_get("box", "gravity");
     if(value.type == VALUE_DOUBLE){
         printf("Box uses %f for gravity\n", value.as.decimal);
     }
