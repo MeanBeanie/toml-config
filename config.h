@@ -120,8 +120,6 @@ void config_load(const char* path){
 						value.as.integer = integer;
 					}
 					else{
-						int lhs = 0;
-						int rhs = 0;
 						int index = 0;
 						for(int j = 0; j < wordSize-1; j++){
 							if(buffer[i-wordSize+1+j] == '.'){
@@ -189,7 +187,7 @@ Value config_section_get(const char* section, const char* name){
 		return res;
 	}
 
-	for(int i = 0; i < __config.size; i++){
+	for(int i = 0; i < (int)__config.size; i++){
 		if(strncmp(__config.values[i].section, section, strlen(section)) == 0
 		&& strncmp(__config.values[i].name, name, strlen(name)) == 0){
 			res = __config.values[i];
