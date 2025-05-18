@@ -39,6 +39,8 @@ name = "Box"
 ```c
 // main.c
 #include <stdio.h>
+#define CONFIG_IMPLEMENTATION
+#include "config.h"
 
 int main(void){
     Config config = config_load("config.toml");
