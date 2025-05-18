@@ -24,10 +24,14 @@ typedef struct {
 	Value* values;
 	size_t size;
 	size_t capacity;
+	int error;
 } Config;
 
-static Config config_load(const char* path);
-static Value config_section_get(Config config, const char* section, const char* name);
+extern Config __config;
+
+void config_load(const char* path);
+Value config_section_get(const char* section, const char* name);
+void config_close();
 
 #endif // CONFIG_H
 
@@ -38,11 +42,15 @@ static Value config_section_get(Config config, const char* section, const char* 
 #include <stdio.h>
 #include <errno.h>
 
-static Config config_load(const char* path){
+Config __config;
+
+void config_load(const char* path){
 	FILE* file = fopen(path, "r");
+	__config = (Config){.values = NULL, .size = 0, .capacity = 0, .error = 0};
 	if(file == NULL){
 		perror("CONFIG ERROR: config_load: failed to open file");
-		return (Config){.values = NULL, .size = 0, .capacity = 0};
+		__config.error = 1;
+		return;
 	}
 
 	fseek(file, 0, SEEK_END);
@@ -151,7 +159,8 @@ static Config config_load(const char* path){
 					res.values = realloc(res.values, res.capacity*sizeof(Value));
 					if(res.values == NULL){
 						fprintf(stderr, "Ran out of memory for the config values, there are too many\n");
-						return (Config){.values = NULL, .size = 0, .capacity = 0};
+						__config.error = 1;
+						return;
 					}
 				}
 				res.values[res.size] = value;
@@ -170,20 +179,37 @@ static Config config_load(const char* path){
 		}
 	}
 
-	return res;
+	__config = res;
 }
 
-static Value config_section_get(Config config, const char* section, const char* name){
+Value config_section_get(const char* section, const char* name){
 	Value res = {0};
+	if(__config.error != 0){
+		fprintf(stderr, "CONFIG ERROR: config_section_get: Cannot get value from errored config\n");
+		return res;
+	}
 
-	for(int i = 0; i < config.size; i++){
-		if(strncmp(config.values[i].section, section, strlen(section)) == 0
-		&& strncmp(config.values[i].name, name, strlen(name)) == 0){
-			res = config.values[i];
+	for(int i = 0; i < __config.size; i++){
+		if(strncmp(__config.values[i].section, section, strlen(section)) == 0
+		&& strncmp(__config.values[i].name, name, strlen(name)) == 0){
+			res = __config.values[i];
 		}
 	}
 
 	return res;
+}
+
+void config_close(){
+	if(__config.error != 0){
+		fprintf(stderr, "CONFIG ERROR: config_close: Closing an errored config may lead to errors, be warned\n");
+	}
+	for(int i = 0; i < (int)__config.size; i++){
+		if(__config.values[i].type == VALUE_STRING){
+			free(__config.values[i].as.string);
+		}
+	}
+	free(__config.values);
+	__config.values = NULL;
 }
 
 #endif // CONFIG_IMPLEMENTATION
